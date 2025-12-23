@@ -25,16 +25,33 @@
         .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .month-indicator { font-size: 22px; font-weight: 700; }
         .nav-btns button { padding: 10px 18px; border-radius: 10px; border: none; background: white; cursor: pointer; font-weight: 600; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .gantt-scroll { overflow-x: auto; position: relative; padding-bottom: 15px; border-radius: 12px; }
-        .gantt-header { display: flex; border-bottom: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.3); }
+        
+        /* Layout Baru untuk Gantt dengan Sidebar Label */
+        .gantt-container { display: flex; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.2); }
+        .gantt-sidebar { width: 180px; flex-shrink: 0; border-right: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.4); z-index: 5; }
+        .gantt-scroll { flex: 1; overflow-x: auto; position: relative; padding-bottom: 15px; scroll-behavior: smooth; }
+        
+        .gantt-header { display: flex; border-bottom: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.3); position: sticky; top: 0; z-index: 4; }
+        .gantt-label-header { height: 50px; display: flex; align-items: center; padding: 0 15px; font-size: 11px; font-weight: 700; color: #8e8e93; border-bottom: 1px solid rgba(0,0,0,0.05); }
         .gantt-day-head { min-width: 50px; text-align: center; padding: 12px 0; font-size: 11px; color: #8e8e93; border-right: 1px solid rgba(0,0,0,0.02); }
         .gantt-day-head.today { background: rgba(0, 122, 255, 0.1); color: var(--accent); font-weight: bold; }
+        
         .gantt-row { position: relative; height: 55px; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.03); }
+        .gantt-label-item { 
+            height: 55px; display: flex; align-items: center; padding: 0 15px; 
+            font-size: 12px; font-weight: 600; color: #1d1d1f; cursor: pointer;
+            border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .gantt-label-item:hover { background: rgba(0, 122, 255, 0.05); color: var(--accent); }
+        
         .ad-bar { 
             position: absolute; height: 34px; background: linear-gradient(90deg, #007AFF, #5856D6); 
             border-radius: 17px; display: flex; align-items: center; padding: 0 15px;
-            color: white; font-size: 11px; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25); white-space: nowrap;
+            color: white; font-size: 11px; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25); 
+            white-space: nowrap; transition: transform 0.3s, box-shadow 0.3s;
         }
+        .ad-bar.highlight { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 122, 255, 0.6); z-index: 10; border: 2px solid white; }
         .stop-label { position: absolute; right: -55px; color: #1d1d1f; font-size: 10px; background: white; padding: 3px 6px; border-radius: 6px; border: 1px solid #eee; }
     </style>
 </head>
@@ -58,7 +75,7 @@
                     <button onclick="changeViewRange(30)">→</button>
                 </div>
             </div>
-            <div id="gantt-chart-root" class="gantt-scroll"></div>
+            <div id="gantt-chart-root"></div>
         </div>
     </div>
     <script>const ADS_DATA = {{ ads|tojson }};</script>
