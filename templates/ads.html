@@ -20,13 +20,15 @@
         .grid-2 { display: grid; grid-template-columns: 380px 1fr; gap: 30px; }
         .glass-card { background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; padding: 30px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.4); margin-bottom: 30px; }
         input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); margin-bottom: 15px; font-size: 14px; background: rgba(255,255,255,0.5); outline: none; }
+        input[readonly] { background: rgba(0,0,0,0.05); color: #8e8e93; cursor: not-allowed; border-color: rgba(0,0,0,0.05); }
         label { display: block; font-size: 12px; font-weight: 600; color: #8e8e93; margin-bottom: 5px; }
         .btn-apple { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; }
         .btn-secondary { width: 100%; padding: 10px; background: transparent; color: #636366; border: 1px solid #ccc; border-radius: 12px; margin-top: 10px; cursor: pointer; }
-        .preview-date { margin-bottom: 20px; padding: 10px; background: rgba(0, 122, 255, 0.05); border-radius: 10px; font-size: 12px; color: var(--accent); font-weight: 600; text-align: center; }
+        .preview-date { margin-bottom: 20px; padding: 15px; background: rgba(0, 122, 255, 0.05); border-radius: 12px; font-size: 12px; color: var(--accent); font-weight: 600; text-align: center; border: 1px dashed var(--accent); }
+        .extension-badge { background: #34C759; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; margin-left: 5px; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 12px; color: #8e8e93; padding: 12px; }
-        td { padding: 14px 12px; border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 14px; }
+        th { text-align: left; font-size: 11px; color: #8e8e93; padding: 12px; border-bottom: 2px solid rgba(0,0,0,0.05); text-transform: uppercase; }
+        td { padding: 14px 12px; border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 13px; }
         .edit-btn { background: none; border: none; cursor: pointer; font-size: 16px; margin-right: 10px; }
         .del-btn { color: #FF3B30; text-decoration: none; font-size: 16px; }
     </style>
@@ -37,52 +39,148 @@
         <ul>
             <li><a href="/dashboard">Dashboard</a></li>
             <li class="active"><a href="/ads">Manajemen Ads</a></li>
-            <li><a href="/logout" style="color:red">Keluar</a></li>
+            <li><a href="/logout" style="color:#FF3B30">Keluar</a></li>
         </ul>
     </div>
     <div class="main-content">
         <div class="grid-2">
             <div class="glass-card">
-                <h3>Input Iklan</h3>
+                <h3 id="form-title" style="margin-bottom: 20px;">Input Iklan Baru</h3>
                 <form action="/ads/save" method="POST" id="adsForm">
                     <input type="hidden" name="id" id="f-id">
-                    <label>Nama Ads</label><input type="text" name="nama_ads" id="f-nama" required>
-                    <label>Budget Harian (Rp)</label><input type="number" name="budget_harian" id="f-budget" required>
-                    <label>Durasi (Hari)</label><input type="number" name="durasi_hari" id="f-durasi" required oninput="prev()">
-                    <label>Waktu Mulai</label><input type="datetime-local" name="start_datetime" id="f-start" required oninput="prev()">
+                    
+                    <label>Nama Ads</label>
+                    <input type="text" name="nama_ads" id="f-nama" placeholder="Contoh: Promo Ramadhan" required>
+                    
+                    <label>Budget Harian (Rp)</label>
+                    <input type="number" name="budget_harian" id="f-budget" placeholder="50000" required>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label>Durasi Dasar (Hari)</label>
+                            <input type="number" name="durasi_hari" id="f-durasi" value="0" required oninput="prev()">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Tambah Durasi (+ Hari)</label>
+                            <input type="number" name="tambah_durasi" id="f-tambah" value="0" style="border-color: #34C759;" oninput="prev()">
+                        </div>
+                    </div>
+                    
+                    <label id="label-start">Waktu Mulai</label>
+                    <input type="datetime-local" name="start_datetime" id="f-start" required oninput="prev()">
+                    
                     <div class="preview-date" id="p-stop">Berakhir: -</div>
-                    <button type="submit" class="btn-apple">Simpan</button>
-                    <button type="button" onclick="location.reload()" class="btn-secondary">Reset</button>
+                    
+                    <button type="submit" class="btn-apple">Konfirmasi & Simpan</button>
+                    <button type="button" onclick="window.location.reload()" class="btn-secondary">Batal / Reset</button>
                 </form>
             </div>
+            
             <div class="glass-card">
-                <h3>Daftar Iklan</h3>
-                <table>
-                    <thead><tr><th>Nama</th><th>Durasi</th><th>Berakhir</th><th>Aksi</th></tr></thead>
-                    <tbody>
-                        {% for ad in ads %}
-                        <tr>
-                            <td>{{ ad.nama_ads }}</td><td>{{ ad.durasi_hari }} Hari</td><td>{{ ad.stop_datetime.strftime('%d/%m %H:%M') }}</td>
-                            <td>
-                                <button onclick="editAd({{ ad|tojson }})" class="edit-btn">✏️</button>
-                                <a href="/ads/delete/{{ ad.id }}" class="del-btn">🗑️</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <h3 style="margin-bottom: 20px;">Daftar Iklan Berjalan</h3>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Iklan</th>
+                                <th>Mulai</th>
+                                <th>Durasi Total</th>
+                                <th>Berakhir</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ad in ads %}
+                            <tr>
+                                <td style="font-weight: 600;">{{ ad.nama_ads }}</td>
+                                <td style="color: #636366;">
+                                    {# Penanganan tampilan tanggal jika ad.start_datetime adalah string dari .isoformat() #}
+                                    {{ ad.start_datetime[:16].replace('T', ' ') if ad.start_datetime is string else ad.start_datetime.strftime('%d/%m/%y %H:%M') }}
+                                </td>
+                                <td>
+                                    {{ ad.durasi_hari }} Hari
+                                    {% if ad.durasi_hari > 0 %}
+                                    <span class="extension-badge">Aktif</span>
+                                    {% endif %}
+                                </td>
+                                <td style="color: var(--accent); font-weight: 600;">
+                                    {{ ad.stop_datetime[:16].replace('T', ' ') if ad.stop_datetime is string else ad.stop_datetime.strftime('%d/%m/%y %H:%M') }}
+                                </td>
+                                <td>
+                                    {# Perbaikan: Gunakan tanda kutip tunggal untuk membungkus atribut onclick agar JSON tidak memutus HTML #}
+                                    <button onclick='editAd({{ ad|tojson }})' class="edit-btn" title="Edit / Perpanjang">✏️</button>
+                                    <a href="/ads/delete/{{ ad.id }}" class="del-btn" onclick="return confirm('Hapus iklan ini?')" title="Hapus">🗑️</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
     <script>
+        /**
+         * Logika Preview: 
+         * Tanggal berakhir = Tanggal Mulai + (Durasi Dasar + Tambahan)
+         * Jam berakhir = Mengikuti jam sekarang (Real-time)
+         */
         function prev() {
-            const s = document.getElementById('f-start').value, d = document.getElementById('f-durasi').value;
-            if(s && d) { let dt = new Date(s); dt.setDate(dt.getDate() + parseInt(d)); document.getElementById('p-stop').innerText = "Berakhir: " + dt.toLocaleString('id-ID'); }
+            const startVal = document.getElementById('f-start').value;
+            const currentDur = parseInt(document.getElementById('f-durasi').value) || 0;
+            const addDur = parseInt(document.getElementById('f-tambah').value) || 0;
+            const totalDur = currentDur + addDur;
+            
+            if(startVal) { 
+                let dt = new Date(startVal);
+                dt.setDate(dt.getDate() + totalDur); 
+                
+                const now = new Date();
+                dt.setHours(now.getHours());
+                dt.setMinutes(now.getMinutes());
+                dt.setSeconds(0);
+                
+                document.getElementById('p-stop').innerHTML = `
+                    <span style="color:#8e8e93; font-weight: normal;">Estimasi Berakhir Baru:</span><br>
+                    <span style="font-size: 15px;">${dt.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    <br><small style="color:#34C759">(Total Kumulatif: ${totalDur} Hari)</small>
+                `; 
+            }
         }
+
+        /**
+         * Fungsi memuat data ke Form
+         * Mengunci Tanggal Mulai agar tidak bisa diubah
+         */
         function editAd(ad) {
-            document.getElementById('f-id').value = ad.id; document.getElementById('f-nama').value = ad.nama_ads;
-            document.getElementById('f-budget').value = ad.budget_harian; document.getElementById('f-durasi').value = ad.durasi_hari;
-            document.getElementById('f-start').value = new Date(ad.start_datetime).toISOString().slice(0,16); prev();
+            document.getElementById('form-title').innerText = "Perpanjang / Edit Iklan";
+            document.getElementById('f-id').value = ad.id; 
+            document.getElementById('f-nama').value = ad.nama_ads;
+            document.getElementById('f-budget').value = ad.budget_harian; 
+            document.getElementById('f-durasi').value = ad.durasi_hari;
+            document.getElementById('f-tambah').value = 0;
+            
+            // Format datetime untuk input HTML
+            const startStr = ad.start_datetime; // format ISO dari backend
+            document.getElementById('f-start').value = startStr.substring(0, 16);
+            
+            // Kunci input tanggal mulai
+            document.getElementById('f-start').setAttribute('readonly', true);
+            document.getElementById('label-start').innerHTML = "Waktu Mulai <span style='color:orange'>(Terkunci)</span>";
+            
+            document.getElementById('f-tambah').focus();
+            prev();
+            
+            document.querySelector('.main-content').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.onload = function() {
+            if(!document.getElementById('f-start').value) {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('f-start').value = now.toISOString().slice(0,16);
+            }
         }
     </script>
 </body>
