@@ -22,37 +22,80 @@
         .logout { margin-top: auto; color: #FF3B30 !important; }
         .main-content { flex: 1; padding: 40px; overflow-y: auto; }
         .glass-card { background: var(--glass); backdrop-filter: blur(15px); border-radius: 24px; padding: 30px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.4); }
-        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        
+        /* Filter System */
+        .filter-section { margin-bottom: 25px; position: relative; z-index: 100; }
+        .filter-title { font-size: 11px; font-weight: 700; color: #8e8e93; margin-bottom: 8px; text-transform: uppercase; }
+        .custom-dropdown { position: relative; width: 280px; }
+        .dropdown-btn { 
+            width: 100%; padding: 12px 16px; background: white; border-radius: 12px; 
+            border: 1px solid rgba(0,0,0,0.1); cursor: pointer; display: flex; 
+            justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600;
+        }
+        .dropdown-btn:after { content: '▼'; font-size: 10px; color: #8e8e93; }
+        .dropdown-content { 
+            position: absolute; top: 110%; left: 0; width: 100%; background: white; 
+            border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: none; padding: 8px; border: 1px solid rgba(0,0,0,0.05); max-height: 200px; overflow-y: auto;
+        }
+        .custom-dropdown.open .dropdown-content { display: block; }
+        .filter-item { display: flex; align-items: center; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+        .filter-item:hover { background: rgba(0, 122, 255, 0.05); }
+        .filter-item input { margin-right: 10px; accent-color: var(--accent); }
+
+        /* Gantt Layout */
+        .calendar-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         .month-indicator { font-size: 22px; font-weight: 700; }
         .nav-btns button { padding: 10px 18px; border-radius: 10px; border: none; background: white; cursor: pointer; font-weight: 600; margin-left: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         
-        /* Layout Baru untuk Gantt dengan Sidebar Label */
-        .gantt-container { display: flex; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.2); }
+        .gantt-container { display: flex; border-radius: 12px; overflow: hidden; background: rgba(255,255,255,0.2); border: 1px solid rgba(0,0,0,0.05); }
         .gantt-sidebar { width: 180px; flex-shrink: 0; border-right: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.4); z-index: 5; }
-        .gantt-scroll { flex: 1; overflow-x: auto; position: relative; padding-bottom: 15px; scroll-behavior: smooth; }
+        .gantt-scroll { flex: 1; overflow-x: auto; position: relative; padding-bottom: 30px; scroll-behavior: smooth; }
         
         .gantt-header { display: flex; border-bottom: 1px solid rgba(0,0,0,0.05); background: rgba(255,255,255,0.3); position: sticky; top: 0; z-index: 4; }
         .gantt-label-header { height: 50px; display: flex; align-items: center; padding: 0 15px; font-size: 11px; font-weight: 700; color: #8e8e93; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .gantt-day-head { min-width: 50px; text-align: center; padding: 12px 0; font-size: 11px; color: #8e8e93; border-right: 1px solid rgba(0,0,0,0.02); }
+        .gantt-day-head { min-width: 50px; width: 50px; text-align: center; padding: 12px 0; font-size: 11px; color: #8e8e93; border-right: 1px solid rgba(0,0,0,0.02); }
         .gantt-day-head.today { background: rgba(0, 122, 255, 0.1); color: var(--accent); font-weight: bold; }
         
-        .gantt-row { position: relative; height: 55px; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.03); }
-        .gantt-label-item { 
-            height: 55px; display: flex; align-items: center; padding: 0 15px; 
-            font-size: 12px; font-weight: 600; color: #1d1d1f; cursor: pointer;
-            border-bottom: 1px solid rgba(0,0,0,0.03); transition: background 0.2s;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .gantt-row { position: relative; height: 65px; display: flex; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.03); }
+        .gantt-label-item { height: 65px; display: flex; align-items: center; padding: 0 15px; font-size: 12px; font-weight: 600; color: #1d1d1f; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.03); transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .gantt-label-item:hover { background: rgba(0, 122, 255, 0.05); color: var(--accent); }
         
         .ad-bar { 
-            position: absolute; height: 34px; background: linear-gradient(90deg, #007AFF, #5856D6); 
-            border-radius: 17px; display: flex; align-items: center; padding: 0 15px;
-            color: white; font-size: 11px; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25); 
+            position: absolute; height: 32px; background: linear-gradient(90deg, #007AFF, #5856D6); 
+            border-radius: 16px; display: flex; align-items: center; padding: 0 15px;
+            color: white; font-size: 10px; font-weight: 700; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); 
             white-space: nowrap; transition: transform 0.3s, box-shadow 0.3s;
+            z-index: 2;
         }
-        .ad-bar.highlight { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 122, 255, 0.6); z-index: 10; border: 2px solid white; }
-        .stop-label { position: absolute; right: -55px; color: #1d1d1f; font-size: 10px; background: white; padding: 3px 6px; border-radius: 6px; border: 1px solid #eee; }
+        .ad-name-text { overflow: hidden; text-overflow: ellipsis; }
+
+        /* Label Jam di Atas Ujung Kanan Bar */
+        .stop-label { 
+            position: absolute; 
+            right: 0; 
+            top: -24px; 
+            background: #1d1d1f; 
+            color: white; 
+            font-size: 9px; 
+            padding: 3px 6px; 
+            border-radius: 4px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+            pointer-events: none;
+        }
+        .stop-label::after {
+            content: "";
+            position: absolute;
+            bottom: -4px;
+            right: 10px;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 4px solid #1d1d1f;
+        }
+
+        .ad-bar.highlight { transform: scale(1.03); box-shadow: 0 0 20px rgba(0, 122, 255, 0.5); z-index: 10; }
+        .empty-chart { padding: 60px; text-align: center; color: #8e8e93; font-style: italic; }
     </style>
 </head>
 <body>
@@ -67,6 +110,15 @@
     <div class="main-content">
         <div class="header"><h1>Kalender Iklan Berjalan</h1></div>
         <div class="glass-card">
+            
+            <div class="filter-section">
+                <div class="filter-title">Filter Nama Iklan</div>
+                <div class="custom-dropdown" id="dropdown-filter">
+                    <div class="dropdown-btn" id="dropdown-label" onclick="toggleDropdown()">Memuat Filter...</div>
+                    <div class="dropdown-content" id="filter-container"></div>
+                </div>
+            </div>
+
             <div class="calendar-nav">
                 <div class="month-indicator" id="month-label">Pemuatan...</div>
                 <div class="nav-btns">
@@ -75,6 +127,7 @@
                     <button onclick="changeViewRange(30)">→</button>
                 </div>
             </div>
+
             <div id="gantt-chart-root"></div>
         </div>
     </div>
