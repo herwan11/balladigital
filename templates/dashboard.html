@@ -61,6 +61,7 @@
         .gantt-label-item { height: 65px; display: flex; align-items: center; padding: 0 15px; font-size: 12px; font-weight: 600; color: #1d1d1f; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.03); transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .gantt-label-item:hover { background: rgba(0, 122, 255, 0.05); color: var(--accent); }
         
+        /* Bar Iklan */
         .ad-bar { 
             position: absolute; height: 32px; background: linear-gradient(90deg, #007AFF, #5856D6); 
             border-radius: 16px; display: flex; align-items: center; padding: 0 15px;
@@ -68,30 +69,41 @@
             white-space: nowrap; transition: transform 0.3s, box-shadow 0.3s;
             z-index: 2;
         }
-        .ad-name-text { overflow: hidden; text-overflow: ellipsis; }
 
-        /* Label Jam di Atas Ujung Kanan Bar */
-        .stop-label { 
-            position: absolute; 
-            right: 0; 
-            top: -24px; 
-            background: #1d1d1f; 
-            color: white; 
-            font-size: 9px; 
-            padding: 3px 6px; 
-            border-radius: 4px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        /* Marker Garis Hari Ini */
+        .today-line-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #FF3B30;
             z-index: 10;
             pointer-events: none;
         }
-        .stop-label::after {
-            content: "";
+        .today-line-marker::after {
+            content: "SEKARANG";
             position: absolute;
-            bottom: -4px;
-            right: 10px;
-            border-left: 4px solid transparent;
-            border-right: 4px solid transparent;
-            border-top: 4px solid #1d1d1f;
+            top: 55px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FF3B30;
+            color: white;
+            font-size: 8px;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 800;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .stop-label { 
+            position: absolute; right: 0; top: -24px; background: #1d1d1f; color: white; 
+            font-size: 9px; padding: 3px 6px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10; pointer-events: none;
+        }
+        .stop-label::after {
+            content: ""; position: absolute; bottom: -4px; right: 10px;
+            border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid #1d1d1f;
         }
 
         .ad-bar.highlight { transform: scale(1.03); box-shadow: 0 0 20px rgba(0, 122, 255, 0.5); z-index: 10; }

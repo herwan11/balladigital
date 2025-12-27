@@ -1,24 +1,23 @@
 /* /static/js/calendar.js */
-// Logika untuk merender Gantt Chart dengan presisi tinggi
+// Logika untuk merender Gantt Chart dengan presisi tinggi dan indikator waktu sekarang
 
 const DAY_WIDTH = 50;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 let viewStartDate = new Date();
-// Normalisasi SANGAT PENTING: Set ke jam 00:00:00 tepat agar grid selaras
+// Normalisasi: Set ke jam 00:00:00 agar grid selaras
 viewStartDate.setHours(0, 0, 0, 0);
 viewStartDate.setDate(viewStartDate.getDate() - 5);
 
 let activeFilters = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Inisialisasi filter: Pilih semua nama iklan unik
+    // Inisialisasi filter: Default pilih semua iklan yang ada
     activeFilters = [...new Set(ADS_DATA.map(ad => ad.nama_ads))];
     
     renderFilters();
     renderGantt();
 
-    // Tutup dropdown jika klik di luar
     document.addEventListener('click', (e) => {
         const dropdown = document.getElementById('dropdown-filter');
         if (dropdown && !dropdown.contains(e.target)) {
@@ -39,6 +38,7 @@ function renderFilters() {
 
     const uniqueNames = [...new Set(ADS_DATA.map(ad => ad.nama_ads))];
 
+    // Update label dropdown berdasarkan jumlah yang dipilih
     if (activeFilters.length === 0) {
         label.innerText = "Tidak Ada Dipilih";
     } else if (activeFilters.length === uniqueNames.length) {
@@ -48,6 +48,15 @@ function renderFilters() {
     }
 
     let html = '';
+    
+    // Tambahkan opsi Check All dan Uncheck All di bagian atas dropdown
+    html += `
+        <div style="display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 5px;">
+            <span onclick="toggleAllFilters(true)" style="color: var(--accent); font-size: 11px; font-weight: 700; cursor: pointer;">PILIH SEMUA</span>
+            <span onclick="toggleAllFilters(false)" style="color: #FF3B30; font-size: 11px; font-weight: 700; cursor: pointer;">HAPUS SEMUA</span>
+        </div>
+    `;
+
     uniqueNames.forEach(name => {
         const isActive = activeFilters.includes(name);
         html += `
@@ -59,6 +68,18 @@ function renderFilters() {
     });
 
     container.innerHTML = html;
+}
+
+// Fungsi untuk memilih semua atau menghapus semua filter
+function toggleAllFilters(selectAll) {
+    const uniqueNames = [...new Set(ADS_DATA.map(ad => ad.nama_ads))];
+    if (selectAll) {
+        activeFilters = [...uniqueNames];
+    } else {
+        activeFilters = [];
+    }
+    renderFilters();
+    renderGantt();
 }
 
 function toggleFilter(event, name) {
@@ -106,27 +127,32 @@ function renderGantt() {
     
     // Header Tanggal
     html += `<div class="gantt-header">`;
-    const todayStr = new Date().toDateString();
+    const now = new Date();
+    const todayStr = now.toDateString();
     dates.forEach(d => {
         const isToday = d.toDateString() === todayStr;
         html += `<div class="gantt-day-head ${isToday?'today':''}"><div>${d.toLocaleDateString('id-ID',{weekday:'short'})}</div><div>${d.getDate()}</div></div>`;
     });
     html += `</div>`;
 
+    // --- GARIS HARI INI (OVERLAY) ---
+    const diffNowMs = now.getTime() - viewStartDate.getTime();
+    const todayLeft = (diffNowMs / MS_PER_DAY) * DAY_WIDTH;
+    if (todayLeft >= 0 && todayLeft <= (days * DAY_WIDTH)) {
+        html += `<div class="today-line-marker" style="left: ${todayLeft}px;"></div>`;
+    }
+
     // Render Bar Iklan
     filteredAds.forEach((ad, index) => {
         const start = new Date(ad.start_datetime);
         const stop = new Date(ad.stop_datetime);
         
-        // Hitung jarak dari titik 00:00 viewStartDate dalam milidetik
         const diffStartMs = start.getTime() - viewStartDate.getTime();
         const diffDurMs = stop.getTime() - start.getTime();
         
-        // Konversi milidetik ke piksel secara presisi
         const left = (diffStartMs / MS_PER_DAY) * DAY_WIDTH;
         const width = (diffDurMs / MS_PER_DAY) * DAY_WIDTH;
         
-        // Format jam berakhir
         const stopTimeStr = stop.getHours().toString().padStart(2,'0') + ":" + stop.getMinutes().toString().padStart(2,'0');
 
         html += `
@@ -167,7 +193,7 @@ function focusAd(index) {
     const ad = filteredAds[index];
     if(!ad) return;
 
-    const adStart = new Date(ad.start_datetime);
+    const adStart = new Date(adStartString = ad.start_datetime);
     const diffDays = (adStart.getTime() - viewStartDate.getTime()) / MS_PER_DAY;
     
     if (diffDays < 0 || diffDays > 55) {
