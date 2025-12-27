@@ -1,0 +1,298 @@
+<!-- /templates/resume.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Resume Iklan - Balla Digital</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --accent: #007AFF; --meta-blue: #0668E1; --glass: rgba(255, 255, 255, 0.7); --shadow: 0 10px 30px rgba(0, 0, 0, 0.08); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background: #e2e8f0; height: 100vh; overflow: hidden; display: flex; }
+        .sidebar { width: 250px; background: var(--glass); backdrop-filter: blur(20px); padding: 30px 20px; border-right: 1px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; }
+        .logo { font-size: 24px; font-weight: 800; margin-bottom: 40px; }
+        .logo span { color: var(--accent); }
+        ul { list-style: none; }
+        li { padding: 12px 18px; border-radius: 12px; margin-bottom: 8px; }
+        li a { text-decoration: none; color: #636366; font-weight: 500; display: block; }
+        li.active { background: var(--accent); }
+        li.active a { color: white; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        
+        .glass-card { background: var(--glass); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.4); margin-bottom: 25px; }
+        .header-flex { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 20px; }
+        
+        .form-group { flex: 1; }
+        label { display: block; font-size: 11px; font-weight: 700; color: #8e8e93; margin-bottom: 6px; text-transform: uppercase; }
+        select, input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: white; outline: none; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-box { background: white; padding: 20px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); }
+        .stat-box h4 { font-size: 11px; color: #8e8e93; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-box p { font-size: 20px; font-weight: 700; color: #1c1c1e; }
+        
+        .btn-apple { padding: 12px 24px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-apple:hover { opacity: 0.9; }
+        .btn-meta { background: var(--meta-blue); }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+        .modal-content { background: white; margin: 5% auto; padding: 30px; width: 500px; border-radius: 24px; position: relative; }
+        .close { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 20px; }
+
+        /* Report PDF Styles */
+        #report-pdf { padding: 40px; background: white; color: #1c1c1e; width: 800px; position: absolute; left: -9999px; }
+        .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0668E1; padding-bottom: 20px; margin-bottom: 30px; }
+        .pdf-logo { color: #0668E1; font-size: 28px; font-weight: 800; }
+        .pdf-meta-tag { background: #E7F3FF; color: #0668E1; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2 class="logo">Balla<span>Digital</span></h2>
+        <ul>
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="/ads">Manajemen Ads</a></li>
+            <li class="active"><a href="/resume">Resume</a></li>
+            <li><a href="/logout" style="color:#FF3B30">Keluar</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="glass-card">
+            <div class="header-flex">
+                <div class="form-group">
+                    <label>Pilih Iklan (Searchable)</label>
+                    <select id="ad-selector" onchange="loadAdData()">
+                        <option value="">-- Pilih Iklan --</option>
+                        {% for ad in ads_list %}
+                        <option value="{{ ad.id }}">{{ ad.nama_ads }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn-apple" onclick="openModal()">Input Data Harian</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box"><h4>Reach</h4><p id="v-reach">0</p></div>
+                <div class="stat-box"><h4>Impressions</h4><p id="v-impr">0</p></div>
+                <div class="stat-box"><h4>Total Leads</h4><p id="v-leads" style="color: var(--accent);">0</p></div>
+                <div class="stat-box"><h4>Spend + PPN 12%</h4><p id="v-spend">Rp 0</p></div>
+            </div>
+
+            <div style="height: 300px; margin-bottom: 30px;">
+                <canvas id="mainChart"></canvas>
+            </div>
+
+            <div style="text-align: right;">
+                <button class="btn-apple btn-meta" onclick="generatePDF()">Print Out (Meta Ads Style)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Input -->
+    <div id="inputModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 style="margin-bottom: 20px;">Input Laporan Harian</h3>
+            <div id="modal-form">
+                <label>Tanggal</label>
+                <input type="date" id="m-date" required style="margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>Reach</label><input type="number" id="m-reach" value="0"></div>
+                    <div><label>Impressions</label><input type="number" id="m-impr" value="0"></div>
+                    <div><label>Leads</label><input type="number" id="m-leads" value="0"></div>
+                    <div><label>Amount Spend (Rp)</label><input type="number" id="m-spend" value="0"></div>
+                </div>
+                <button class="btn-apple" style="width: 100%; margin-top: 25px;" onclick="saveDailyReport()">Simpan Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template PDF (Hidden) -->
+    <div id="report-pdf">
+        <div class="pdf-header">
+            <div>
+                <div class="pdf-logo">Balla<span>Digital</span></div>
+                <div style="font-size: 14px; color: #636366;">Laporan Kinerja Iklan</div>
+            </div>
+            <div style="text-align: right;">
+                <span class="pdf-meta-tag">Meta Ads Certified</span>
+                <div id="pdf-ad-name" style="font-weight: 700; margin-top: 5px; font-size: 18px;">Nama Iklan</div>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-box"><h4>Reach</h4><p id="p-reach">0</p></div>
+            <div class="stat-box"><h4>Impressions</h4><p id="p-impr">0</p></div>
+            <div class="stat-box"><h4>Total Leads</h4><p id="p-leads">0</p></div>
+            <div class="stat-box"><h4>Total Spend (Inc. PPN)</h4><p id="p-spend">Rp 0</p></div>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <h4 style="font-size: 12px; color: #8e8e93; margin-bottom: 10px;">GRAFIK PENGELUARAN (AMOUNT SPENT)</h4>
+            <canvas id="pdfChartSpend"></canvas>
+        </div>
+        <div>
+            <h4 style="font-size: 12px; color: #8e8e93; margin-bottom: 10px;">GRAFIK HASIL (LEADS)</h4>
+            <canvas id="pdfChartLeads"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+        let currentAdData = null;
+
+        function openModal() {
+            if(!document.getElementById('ad-selector').value) {
+                alert("Pilih iklan terlebih dahulu!");
+                return;
+            }
+            document.getElementById('inputModal').style.display = 'block';
+        }
+        function closeModal() { document.getElementById('inputModal').style.display = 'none'; }
+
+        async function loadAdData() {
+            const adId = document.getElementById('ad-selector').value;
+            if(!adId) return;
+
+            const res = await fetch(`/resume/data/${adId}`);
+            const data = await res.json();
+            currentAdData = data;
+            updateUI();
+        }
+
+        function updateUI() {
+            const reports = currentAdData.reports;
+            let totalReach = 0, totalImpr = 0, totalLeads = 0, totalSpend = 0;
+
+            reports.forEach(r => {
+                totalReach += r.reach;
+                totalImpr += r.impressions;
+                totalLeads += r.leads;
+                totalSpend += r.amount_spent;
+            });
+
+            const totalWithPPN = totalSpend * 1.12;
+
+            document.getElementById('v-reach').innerText = totalReach.toLocaleString();
+            document.getElementById('v-impr').innerText = totalImpr.toLocaleString();
+            document.getElementById('v-leads').innerText = totalLeads.toLocaleString();
+            document.getElementById('v-spend').innerText = 'Rp ' + Math.round(totalWithPPN).toLocaleString();
+
+            renderChart(reports);
+        }
+
+        function renderChart(reports) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(myChart) myChart.destroy();
+
+            const labels = reports.map(r => r.report_date);
+            const spendData = reports.map(r => r.amount_spent);
+            const leadsData = reports.map(r => r.leads);
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Amount Spent (Rp)',
+                            data: spendData,
+                            borderColor: '#0668E1',
+                            backgroundColor: 'rgba(6, 104, 225, 0.1)',
+                            fill: true,
+                            yAxisID: 'y',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Leads',
+                            data: leadsData,
+                            borderColor: '#34C759',
+                            borderDash: [5, 5],
+                            yAxisID: 'y1',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { type: 'linear', position: 'left', title: { display: true, text: 'Spend' } },
+                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Leads' } }
+                    }
+                }
+            });
+        }
+
+        async function saveDailyReport() {
+            const adId = document.getElementById('ad-selector').value;
+            const payload = {
+                ad_id: adId,
+                report_date: document.getElementById('m-date').value,
+                reach: parseInt(document.getElementById('m-reach').value),
+                impressions: parseInt(document.getElementById('m-impr').value),
+                leads: parseInt(document.getElementById('m-leads').value),
+                amount_spent: parseInt(document.getElementById('m-spend').value)
+            };
+
+            if(!payload.report_date) return alert("Pilih tanggal!");
+
+            const res = await fetch('/resume/save_report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) {
+                closeModal();
+                loadAdData();
+            }
+        }
+
+        async function generatePDF() {
+            if(!currentAdData) return;
+            
+            // Siapkan Data PDF
+            document.getElementById('pdf-ad-name').innerText = currentAdData.ad.nama_ads;
+            document.getElementById('p-reach').innerText = document.getElementById('v-reach').innerText;
+            document.getElementById('p-impr').innerText = document.getElementById('v-impr').innerText;
+            document.getElementById('p-leads').innerText = document.getElementById('v-leads').innerText;
+            document.getElementById('p-spend').innerText = document.getElementById('v-spend').innerText;
+
+            const reports = currentAdData.reports;
+            const labels = reports.map(r => r.report_date);
+
+            // Render Chart Khusus PDF
+            new Chart(document.getElementById('pdfChartSpend'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Spend', data: reports.map(r => r.amount_spent), backgroundColor: '#0668E1' }]
+                }
+            });
+
+            new Chart(document.getElementById('pdfChartLeads'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'Leads', data: reports.map(r => r.leads), borderColor: '#34C759', fill: false }]
+                }
+            });
+
+            const element = document.getElementById('report-pdf');
+            const opt = {
+                margin: 10,
+                filename: `Report_${currentAdData.ad.nama_ads}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().from(element).save();
+        }
+    </script>
+</body>
+</html>

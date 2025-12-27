@@ -22,6 +22,18 @@ stop_datetime DATETIME NOT NULL,
 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS ad_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad_id INT NOT NULL,
+    report_date DATE NOT NULL,
+    reach INT DEFAULT 0,
+    impressions INT DEFAULT 0,
+    leads INT DEFAULT 0,
+    amount_spent INT DEFAULT 0,
+    FOREIGN KEY (ad_id) REFERENCES ads(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_ad_date (ad_id, report_date)
+);
+
 -- Insert User Default untuk testing
 INSERT INTO users (username, password) VALUES ('admin', 'admin123');
 

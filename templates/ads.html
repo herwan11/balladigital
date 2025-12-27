@@ -39,6 +39,7 @@
         <ul>
             <li><a href="/dashboard">Dashboard</a></li>
             <li class="active"><a href="/ads">Manajemen Ads</a></li>
+            <li><a href="/resume">Resume</a></li>
             <li><a href="/logout" style="color:#FF3B30">Keluar</a></li>
         </ul>
     </div>
@@ -94,7 +95,6 @@
                             <tr>
                                 <td style="font-weight: 600;">{{ ad.nama_ads }}</td>
                                 <td style="color: #636366;">
-                                    {# Penanganan tampilan tanggal jika ad.start_datetime adalah string dari .isoformat() #}
                                     {{ ad.start_datetime[:16].replace('T', ' ') if ad.start_datetime is string else ad.start_datetime.strftime('%d/%m/%y %H:%M') }}
                                 </td>
                                 <td>
@@ -107,7 +107,6 @@
                                     {{ ad.stop_datetime[:16].replace('T', ' ') if ad.stop_datetime is string else ad.stop_datetime.strftime('%d/%m/%y %H:%M') }}
                                 </td>
                                 <td>
-                                    {# Perbaikan: Gunakan tanda kutip tunggal untuk membungkus atribut onclick agar JSON tidak memutus HTML #}
                                     <button onclick='editAd({{ ad|tojson }})' class="edit-btn" title="Edit / Perpanjang">✏️</button>
                                     <a href="/ads/delete/{{ ad.id }}" class="del-btn" onclick="return confirm('Hapus iklan ini?')" title="Hapus">🗑️</a>
                                 </td>
@@ -121,11 +120,6 @@
     </div>
 
     <script>
-        /**
-         * Logika Preview: 
-         * Tanggal berakhir = Tanggal Mulai + (Durasi Dasar + Tambahan)
-         * Jam berakhir = Mengikuti jam sekarang (Real-time)
-         */
         function prev() {
             const startVal = document.getElementById('f-start').value;
             const currentDur = parseInt(document.getElementById('f-durasi').value) || 0;
@@ -149,10 +143,6 @@
             }
         }
 
-        /**
-         * Fungsi memuat data ke Form
-         * Mengunci Tanggal Mulai agar tidak bisa diubah
-         */
         function editAd(ad) {
             document.getElementById('form-title').innerText = "Perpanjang / Edit Iklan";
             document.getElementById('f-id').value = ad.id; 
@@ -161,11 +151,9 @@
             document.getElementById('f-durasi').value = ad.durasi_hari;
             document.getElementById('f-tambah').value = 0;
             
-            // Format datetime untuk input HTML
-            const startStr = ad.start_datetime; // format ISO dari backend
+            const startStr = ad.start_datetime;
             document.getElementById('f-start').value = startStr.substring(0, 16);
             
-            // Kunci input tanggal mulai
             document.getElementById('f-start').setAttribute('readonly', true);
             document.getElementById('label-start').innerHTML = "Waktu Mulai <span style='color:orange'>(Terkunci)</span>";
             
