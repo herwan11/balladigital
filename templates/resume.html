@@ -44,6 +44,15 @@
         .btn-apple { padding: 12px 24px; background: var(--accent); white-space: nowrap; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-apple:hover { opacity: 0.9; }
         .btn-meta { background: var(--meta-blue); }
+
+        /* Table Styles */
+        .table-container { width: 100%; overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { text-align: left; font-size: 11px; color: #8e8e93; padding: 12px; text-transform: uppercase; border-bottom: 2px solid rgba(0,0,0,0.05); }
+        td { padding: 12px; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 13px; color: #1c1c1e; }
+        .actions-cell { display: flex; gap: 8px; }
+        .action-btn { border: none; background: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 8px; transition: 0.2s; }
+        .action-btn:hover { background: rgba(0,0,0,0.05); }
         
         /* Modal Style */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
@@ -121,7 +130,13 @@
             .chart-section { page-break-inside: avoid; margin-bottom: 15px; }
             .chart-title { font-size: 11px; font-weight: 700; color: #4B4F56; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #E9EBEE; padding-bottom: 4px; }
             
-            .print-canvas-container { height: 210px !important; }
+            /* Kontrol tinggi agar 2 grafik muat dalam satu halaman */
+            .print-canvas-container { height: 200px !important; }
+
+            /* Print Table Style */
+            .print-table { width: 100%; margin-top: 15px; border: 1px solid #E9EBEE; border-radius: 4px; }
+            .print-table th { background: #F0F2F5; color: #4B4F56; font-size: 9px; padding: 10px 8px; text-align: left; }
+            .print-table td { font-size: 10px; padding: 8px; border-bottom: 1px solid #E9EBEE; }
             
             .pdf-footer {
                 margin-top: 20px;
@@ -158,22 +173,40 @@
                         {% endfor %}
                     </select>
                 </div>
-                <button class="btn-apple" onclick="openModal()">Input Data Harian</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-apple" onclick="openModal()">Input Data Harian</button>
+                    <button class="btn-apple btn-meta" onclick="printReport()">Print / Save PDF</button>
+                </div>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-box"><h4>Reach</h4><p id="v-reach">0</p></div>
                 <div class="stat-box"><h4>Impressions</h4><p id="v-impr">0</p></div>
                 <div class="stat-box"><h4>Total Leads</h4><p id="v-leads" style="color: var(--accent);">0</p></div>
-                <div class="stat-box"><h4>Spend</h4><p id="v-spend">Rp 0</p></div>
+                <div class="stat-box"><h4>Total Spend</h4><p id="v-spend">Rp 0</p></div>
             </div>
 
             <div style="height: 350px; margin-bottom: 30px;">
                 <canvas id="mainChart"></canvas>
             </div>
 
-            <div style="text-align: right;">
-                <button class="btn-apple btn-meta" onclick="printReport()">Print Preview / Save PDF</button>
+            <div class="table-container">
+                <h3 style="font-size: 14px; margin-bottom: 15px; color: #1c1c1e;">Detail Laporan Harian</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Reach</th>
+                            <th>Impressions</th>
+                            <th>Leads</th>
+                            <th>Amount Spend</th>
+                            <th style="text-align: right;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="daily-table-body">
+                        <!-- Data akan diisi melalui JS -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -182,7 +215,7 @@
     <div id="inputModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h3 style="margin-bottom: 20px;">Input Laporan Harian</h3>
+            <h3 id="modal-title" style="margin-bottom: 20px;">Input Laporan Harian</h3>
             <div id="modal-form">
                 <label>Tanggal</label>
                 <input type="date" id="m-date" required style="margin-bottom: 15px;">
@@ -222,17 +255,35 @@
         </div>
 
         <div class="chart-section">
-            <div class="chart-title">Analisis Pengeluaran Harian</div>
+            <div class="chart-title">Analisis Biaya & Hasil (Spent vs Leads)</div>
             <div class="print-canvas-container">
-                <canvas id="printChartSpend"></canvas>
+                <canvas id="printChartA"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-title">Analisis Visibilitas (Reach vs Impressions)</div>
+            <div class="print-canvas-container">
+                <canvas id="printChartB"></canvas>
             </div>
         </div>
 
         <div class="chart-section" style="margin-bottom: 0;">
-            <div class="chart-title">Analisis Hasil Harian (Leads)</div>
-            <div class="print-canvas-container">
-                <canvas id="printChartLeads"></canvas>
-            </div>
+            <div class="chart-title">Rincian Data Per Hari</div>
+            <table class="print-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Reach</th>
+                        <th>Impressions</th>
+                        <th>Leads</th>
+                        <th>Amount Spend</th>
+                    </tr>
+                </thead>
+                <tbody id="print-table-body">
+                    <!-- Diisi via JS -->
+                </tbody>
+            </table>
         </div>
 
         <div class="pdf-footer">
@@ -243,8 +294,8 @@
 
     <script>
         let myChart = null;
-        let printChartS = null;
-        let printChartL = null;
+        let printChartA = null;
+        let printChartB = null;
         let currentAdData = null;
 
         const todayLinePlugin = {
@@ -280,7 +331,13 @@
 
         function openModal() {
             if(!document.getElementById('ad-selector').value) return alert("Pilih iklan terlebih dahulu!");
+            document.getElementById('modal-title').innerText = "Input Laporan Harian";
+            document.getElementById('m-date').readOnly = false;
             document.getElementById('m-date').valueAsDate = new Date();
+            document.getElementById('m-reach').value = 0;
+            document.getElementById('m-impr').value = 0;
+            document.getElementById('m-leads').value = 0;
+            document.getElementById('m-spend').value = 0;
             document.getElementById('inputModal').style.display = 'block';
         }
         
@@ -301,20 +358,86 @@
             const reports = currentAdData.reports;
             let totalReach = 0, totalImpr = 0, totalLeads = 0, totalSpend = 0;
 
+            const tableBody = document.getElementById('daily-table-body');
+            const printTableBody = document.getElementById('print-table-body');
+            tableBody.innerHTML = '';
+            printTableBody.innerHTML = '';
+
             reports.forEach(r => {
                 totalReach += r.reach;
                 totalImpr += r.impressions;
                 totalLeads += r.leads;
                 totalSpend += r.amount_spent;
+
+                // Isi tabel utama
+                const row = `
+                    <tr>
+                        <td>${r.report_date}</td>
+                        <td>${r.reach.toLocaleString()}</td>
+                        <td>${r.impressions.toLocaleString()}</td>
+                        <td>${r.leads.toLocaleString()}</td>
+                        <td>Rp ${r.amount_spent.toLocaleString()}</td>
+                        <td class="actions-cell" style="justify-content: flex-end;">
+                            <button class="action-btn" title="Edit" onclick="editDaily('${r.report_date}')">✏️</button>
+                            <button class="action-btn" title="Hapus" style="color:#FF3B30" onclick="deleteDaily('${r.report_date}')">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+
+                // Isi tabel print
+                const printRow = `
+                    <tr>
+                        <td>${r.report_date}</td>
+                        <td>${r.reach.toLocaleString()}</td>
+                        <td>${r.impressions.toLocaleString()}</td>
+                        <td>${r.leads.toLocaleString()}</td>
+                        <td>Rp ${r.amount_spent.toLocaleString()}</td>
+                    </tr>
+                `;
+                printTableBody.insertAdjacentHTML('beforeend', printRow);
             });
 
-            // Logika kalkulasi tetap, namun caption "PPN 12%" dihilangkan dari tampilan
             document.getElementById('v-reach').innerText = totalReach.toLocaleString();
             document.getElementById('v-impr').innerText = totalImpr.toLocaleString();
             document.getElementById('v-leads').innerText = totalLeads.toLocaleString();
             document.getElementById('v-spend').innerText = 'Rp ' + totalSpend.toLocaleString();
 
             renderMainChart(reports);
+        }
+
+        function editDaily(date) {
+            const report = currentAdData.reports.find(r => r.report_date === date);
+            if(!report) return;
+
+            document.getElementById('modal-title').innerText = "Edit Laporan Harian";
+            document.getElementById('m-date').value = date;
+            document.getElementById('m-date').readOnly = true;
+            document.getElementById('m-reach').value = report.reach;
+            document.getElementById('m-impr').value = report.impressions;
+            document.getElementById('m-leads').value = report.leads;
+            document.getElementById('m-spend').value = report.amount_spent;
+            document.getElementById('inputModal').style.display = 'block';
+        }
+
+        async function deleteDaily(date) {
+            if(!confirm(`Hapus data laporan tanggal ${date}?`)) return;
+            
+            const res = await fetch('/resume/save_report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ad_id: currentAdData.ad.id,
+                    report_date: date,
+                    reach: 0,
+                    impressions: 0,
+                    leads: 0,
+                    amount_spent: 0,
+                    is_delete: true
+                })
+            });
+
+            if(res.ok) { loadAdData(); }
         }
 
         function renderMainChart(reports) {
@@ -326,7 +449,7 @@
             const leadsData = reports.map(r => r.leads);
 
             myChart = new Chart(ctx, {
-                type: 'bar', // Mengubah menjadi grafik balok
+                type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
@@ -402,45 +525,90 @@
                 document.getElementById('print-date-range').innerText = `Periode: ${labels[0]} s/d ${labels[labels.length-1]}`;
             }
 
-            if(printChartS) printChartS.destroy();
-            if(printChartL) printChartL.destroy();
+            // Hancurkan chart lama jika ada
+            if(printChartA) printChartA.destroy();
+            if(printChartB) printChartB.destroy();
 
-            const chartOptions = { 
+            const baseOptions = { 
                 animation: false, 
                 responsive: true, 
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false }, todayLine: {} },
+                plugins: { 
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } },
+                    todayLine: {} 
+                },
                 scales: {
                     x: { grid: { display: false }, ticks: { font: { size: 8 } } },
-                    y: { beginAtZero: true, ticks: { font: { size: 8 } } }
+                    y: { 
+                        type: 'linear', display: true, position: 'left', 
+                        ticks: { font: { size: 7 } } 
+                    }
                 }
             };
 
-            printChartS = new Chart(document.getElementById('printChartSpend').getContext('2d'), {
-                type: 'bar', // Mengubah menjadi grafik balok pada print
+            // Grafik A: Amount Spent vs Leads (Bar Chart)
+            const ctxA = document.getElementById('printChartA').getContext('2d');
+            printChartA = new Chart(ctxA, {
+                type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{ 
-                        label: 'Amount Spent', 
-                        data: reports.map(r => r.amount_spent), 
-                        backgroundColor: 'rgba(6, 104, 225, 0.8)'
-                    }]
+                    datasets: [
+                        { 
+                            label: 'Amount Spent (Rp)', 
+                            data: reports.map(r => r.amount_spent), 
+                            backgroundColor: 'rgba(6, 104, 225, 0.8)',
+                            yAxisID: 'y'
+                        },
+                        { 
+                            label: 'Leads', 
+                            data: reports.map(r => r.leads), 
+                            backgroundColor: 'rgba(52, 199, 89, 0.8)',
+                            yAxisID: 'y1'
+                        }
+                    ]
                 },
-                options: chartOptions,
+                options: {
+                    ...baseOptions,
+                    scales: {
+                        ...baseOptions.scales,
+                        y: { ...baseOptions.scales.y, title: { display: true, text: 'Spend (Rp)', font: { size: 8 } } },
+                        y1: { 
+                            type: 'linear', display: true, position: 'right', 
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'Leads', font: { size: 8 } },
+                            ticks: { font: { size: 7 } }
+                        }
+                    }
+                },
                 plugins: [todayLinePlugin]
             });
 
-            printChartL = new Chart(document.getElementById('printChartLeads').getContext('2d'), {
-                type: 'bar', // Mengubah menjadi grafik balok pada print
+            // Grafik B: Reach vs Impressions (Line Chart)
+            const ctxB = document.getElementById('printChartB').getContext('2d');
+            printChartB = new Chart(ctxB, {
+                type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ 
-                        label: 'Leads', 
-                        data: reports.map(r => r.leads), 
-                        backgroundColor: 'rgba(52, 199, 89, 0.8)'
-                    }]
+                    datasets: [
+                        { 
+                            label: 'Reach', 
+                            data: reports.map(r => r.reach), 
+                            borderColor: 'rgba(255, 149, 0, 1)',
+                            backgroundColor: 'rgba(255, 149, 0, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        { 
+                            label: 'Impressions', 
+                            data: reports.map(r => r.impressions), 
+                            borderColor: 'rgba(88, 86, 214, 1)',
+                            backgroundColor: 'rgba(88, 86, 214, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
                 },
-                options: chartOptions,
+                options: baseOptions,
                 plugins: [todayLinePlugin]
             });
 
