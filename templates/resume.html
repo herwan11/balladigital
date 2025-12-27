@@ -41,7 +41,7 @@
         .stat-box h4 { font-size: 11px; color: #8e8e93; text-transform: uppercase; margin-bottom: 5px; }
         .stat-box p { font-size: 20px; font-weight: 700; color: #1c1c1e; }
         
-        .btn-apple { padding: 12px 24px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        .btn-apple { padding: 12px 24px; background: var(--accent); white-space: nowrap; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .btn-apple:hover { opacity: 0.9; }
         .btn-meta { background: var(--meta-blue); }
         
@@ -50,7 +50,7 @@
         .modal-content { background: white; margin: 5% auto; padding: 30px; width: 500px; border-radius: 24px; position: relative; }
         .close { position: absolute; right: 20px; top: 20px; cursor: pointer; font-size: 20px; }
 
-        /* --- PRINT AREA STYLES (Meta Ads Report Inspired) --- */
+        /* --- PRINT AREA STYLES --- */
         #report-printable { 
             position: absolute;
             left: -9999px;
@@ -73,7 +73,6 @@
                 color: #1c1e21;
             }
 
-            /* Meta Ads Style Header - UPDATED SIZES */
             .pdf-header { 
                 display: flex; 
                 justify-content: space-between; 
@@ -122,7 +121,7 @@
             .chart-section { page-break-inside: avoid; margin-bottom: 15px; }
             .chart-title { font-size: 11px; font-weight: 700; color: #4B4F56; margin-bottom: 8px; text-transform: uppercase; border-bottom: 1px solid #E9EBEE; padding-bottom: 4px; }
             
-            .print-canvas-container { height: 210px !important; } /* Slightly reduced height to ensure 1 page with larger header */
+            .print-canvas-container { height: 210px !important; }
             
             .pdf-footer {
                 margin-top: 20px;
@@ -137,7 +136,6 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar UI -->
     <div class="sidebar">
         <h2 class="logo">Balla<span>Digital</span></h2>
         <ul>
@@ -148,7 +146,6 @@
         </ul>
     </div>
 
-    <!-- Main Dashboard UI -->
     <div class="main-content">
         <div class="glass-card">
             <div class="header-flex">
@@ -168,7 +165,7 @@
                 <div class="stat-box"><h4>Reach</h4><p id="v-reach">0</p></div>
                 <div class="stat-box"><h4>Impressions</h4><p id="v-impr">0</p></div>
                 <div class="stat-box"><h4>Total Leads</h4><p id="v-leads" style="color: var(--accent);">0</p></div>
-                <div class="stat-box"><h4>Spend + PPN 12%</h4><p id="v-spend">Rp 0</p></div>
+                <div class="stat-box"><h4>Spend</h4><p id="v-spend">Rp 0</p></div>
             </div>
 
             <div style="height: 350px; margin-bottom: 30px;">
@@ -221,7 +218,7 @@
             <div class="print-stat-card"><h4>Jangkauan (Reach)</h4><p id="p-reach">0</p></div>
             <div class="print-stat-card"><h4>Tayangan (Impressions)</h4><p id="p-impr">0</p></div>
             <div class="print-stat-card"><h4>Hasil (Leads)</h4><p id="p-leads" style="color: #0668E1;">0</p></div>
-            <div class="print-stat-card"><h4>Total Biaya (Inc. PPN)</h4><p id="p-spend">Rp 0</p></div>
+            <div class="print-stat-card"><h4>Total Biaya</h4><p id="p-spend">Rp 0</p></div>
         </div>
 
         <div class="chart-section">
@@ -249,6 +246,37 @@
         let printChartS = null;
         let printChartL = null;
         let currentAdData = null;
+
+        const todayLinePlugin = {
+            id: 'todayLine',
+            afterDraw: (chart) => {
+                const today = new Date();
+                const offset = today.getTimezoneOffset();
+                const localTodayStr = new Date(today.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+                
+                const index = chart.data.labels.indexOf(localTodayStr);
+                
+                if (index !== -1) {
+                    const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+                    const xPos = x.getPixelForValue(localTodayStr);
+                    
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#FF3B30';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.moveTo(xPos, top);
+                    ctx.lineTo(xPos, bottom);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#FF3B30';
+                    ctx.font = 'bold 10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('HARI INI', xPos, top - 8);
+                    ctx.restore();
+                }
+            }
+        };
 
         function openModal() {
             if(!document.getElementById('ad-selector').value) return alert("Pilih iklan terlebih dahulu!");
@@ -280,12 +308,11 @@
                 totalSpend += r.amount_spent;
             });
 
-            const totalWithPPN = totalSpend * 1.12;
-
+            // Logika kalkulasi tetap, namun caption "PPN 12%" dihilangkan dari tampilan
             document.getElementById('v-reach').innerText = totalReach.toLocaleString();
             document.getElementById('v-impr').innerText = totalImpr.toLocaleString();
             document.getElementById('v-leads').innerText = totalLeads.toLocaleString();
-            document.getElementById('v-spend').innerText = 'Rp ' + Math.round(totalWithPPN).toLocaleString();
+            document.getElementById('v-spend').innerText = 'Rp ' + totalSpend.toLocaleString();
 
             renderMainChart(reports);
         }
@@ -299,7 +326,7 @@
             const leadsData = reports.map(r => r.leads);
 
             myChart = new Chart(ctx, {
-                type: 'line',
+                type: 'bar', // Mengubah menjadi grafik balok
                 data: {
                     labels: labels,
                     datasets: [
@@ -307,19 +334,15 @@
                             label: 'Spend (Rp)',
                             data: spendData,
                             borderColor: '#0668E1',
-                            backgroundColor: 'rgba(6, 104, 225, 0.1)',
-                            fill: true,
-                            yAxisID: 'y',
-                            tension: 0.4
+                            backgroundColor: 'rgba(6, 104, 225, 0.7)',
+                            yAxisID: 'y'
                         },
                         {
                             label: 'Leads',
                             data: leadsData,
                             borderColor: '#34C759',
-                            backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                            fill: true,
-                            yAxisID: 'y1',
-                            tension: 0.4
+                            backgroundColor: 'rgba(52, 199, 89, 0.7)',
+                            yAxisID: 'y1'
                         }
                     ]
                 },
@@ -330,8 +353,10 @@
                     scales: {
                         y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Spend' } },
                         y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Leads' } }
-                    }
-                }
+                    },
+                    plugins: { todayLine: {} }
+                },
+                plugins: [todayLinePlugin]
             });
         }
 
@@ -363,7 +388,6 @@
         function printReport() {
             if(!currentAdData || !currentAdData.ad) return alert("Pilih iklan dan pastikan data tersedia!");
 
-            // 1. Sinkronisasi Data Teks
             document.getElementById('print-ad-name').innerText = currentAdData.ad.nama_ads;
             document.getElementById('print-timestamp').innerText = "Dicetak pada: " + new Date().toLocaleString('id-ID');
             document.getElementById('p-reach').innerText = document.getElementById('v-reach').innerText;
@@ -378,7 +402,6 @@
                 document.getElementById('print-date-range').innerText = `Periode: ${labels[0]} s/d ${labels[labels.length-1]}`;
             }
 
-            // 2. Render Grafik Khusus Print
             if(printChartS) printChartS.destroy();
             if(printChartL) printChartL.destroy();
 
@@ -386,7 +409,7 @@
                 animation: false, 
                 responsive: true, 
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { legend: { display: false }, todayLine: {} },
                 scales: {
                     x: { grid: { display: false }, ticks: { font: { size: 8 } } },
                     y: { beginAtZero: true, ticks: { font: { size: 8 } } }
@@ -394,43 +417,34 @@
             };
 
             printChartS = new Chart(document.getElementById('printChartSpend').getContext('2d'), {
-                type: 'line',
+                type: 'bar', // Mengubah menjadi grafik balok pada print
                 data: {
                     labels: labels,
                     datasets: [{ 
                         label: 'Amount Spent', 
                         data: reports.map(r => r.amount_spent), 
-                        borderColor: '#0668E1',
-                        backgroundColor: 'rgba(6, 104, 225, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 2
+                        backgroundColor: 'rgba(6, 104, 225, 0.8)'
                     }]
                 },
-                options: chartOptions
+                options: chartOptions,
+                plugins: [todayLinePlugin]
             });
 
             printChartL = new Chart(document.getElementById('printChartLeads').getContext('2d'), {
-                type: 'line',
+                type: 'bar', // Mengubah menjadi grafik balok pada print
                 data: {
                     labels: labels,
                     datasets: [{ 
                         label: 'Leads', 
                         data: reports.map(r => r.leads), 
-                        borderColor: '#34C759', 
-                        backgroundColor: 'rgba(52, 199, 89, 0.1)',
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 2
+                        backgroundColor: 'rgba(52, 199, 89, 0.8)'
                     }]
                 },
-                options: chartOptions
+                options: chartOptions,
+                plugins: [todayLinePlugin]
             });
 
-            // 3. Panggil Print Preview
-            setTimeout(() => {
-                window.print();
-            }, 800);
+            setTimeout(() => { window.print(); }, 800);
         }
     </script>
 </body>
